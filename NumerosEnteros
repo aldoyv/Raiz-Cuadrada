@@ -1,0 +1,74 @@
+; Calcular la raíz cuadrada de un número
+
+    org 0000h        ; Dirección de inicio del programa
+
+start:
+    ld a, b         ; Cargar el número BCD en el registro A
+    call bcd_to_bin ; Convertir BCD a binario
+    ld hl, 0        ; Inicializar HL para guardar el número binario (HL = 0)
+    ld h, a         ; Cargar el valor binario en HL
+
+; Calculamos la raíz cuadrada del valor binario
+    call sqrt_binary ; Llamar a la subrutina para calcular la raíz cuadrada
+
+    ld c, a         ; Guardar el resultado en C
+
+    ; Fin del programa
+    jp $            ; Salto infinito para finalizar
+
+; Subrutina: Convertir BCD a binario
+bcd_to_bin:
+    ld a, b         ; Cargar el número BCD en el registro A
+    ld b, 0         ; Inicializamos el registro B para el resultado binario
+    ld c, 0         ; Inicializamos el registro C para el dígito alto
+
+    ; Convertir BCD (dígitos altos y bajos) a binario
+    ld d, 4         ; Número de bits a procesar (4 por dígito BCD)
+
+convert_loop:
+    rrc a           ; Rotar a la derecha con acarreo
+    ld b, a         ; Guardar el bit menos significativo en B
+    ld a, b         ; Cargar el bit en A
+    rl b            ; Desplazar el resultado en B a la izquierda
+    rl c            ; Desplazar el resultado en C a la izquierda
+    dec d           ; Decrementar el número de bits restantes
+    ld a, d         ; Cargar el número de bits restantes en A
+    or a            ; Verificar si el contador es cero
+    jr nz, convert_loop ; Si no es cero, repetir
+
+    ld a, c         ; El valor en C es el número binario
+    ret
+
+; Subrutina: Calcular la raíz cuadrada de un número binario
+sqrt_binary:
+    ld b, 0         ; Inicializar el registro B (candidato para la raíz cuadrada)
+    ld d, 0         ; Inicializar el registro D (candidato cuadrado)
+    ld e, 1         ; Inicializar el registro E para la búsqueda binaria
+    ld a, 0         ; Inicializar el registro A para el resultado
+
+sqrt_loop:
+    ld c, b         ; Guardar el candidato en C
+    ld hl, 0        ; Inicializar HL
+    ld h, b         ; Cargar el candidato en H
+    ld l, b         ; Cargar el candidato en L
+    mul b            ; Multiplicar el candidato por sí mismo (HL = b * b)
+    ld d, h         ; Guardar el resultado alto en D
+    ld e, l         ; Guardar el resultado bajo en E
+    ld a, h         ; Cargar el resultado alto en A
+    cp a            ; Comparar el resultado con el número original
+    jp c, sqrt_loop ; Si el resultado es menor o igual, continuar
+
+    ld a, b         ; El resultado final está en B
+    ret
+
+;Multiplicación de un byte por sí mismo
+mul:
+    ld h, a         ; Guardar el valor en H
+    ld l, a         ; Guardar el valor en L
+    mul_loop:
+        add hl, hl   ; Multiplicar HL = HL + HL
+        dec b        ; Decrementar el contador
+        ld a, b      ; Cargar el contador en A
+        or a         ; Verificar si el contador es cero
+        jr nz, mul_loop ; Si no es cero, repetir
+    end
